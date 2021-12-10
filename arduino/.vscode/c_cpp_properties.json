@@ -24,7 +24,7 @@
                 "/home/andrew/.arduino15/packages/arduino/hardware/samd/1.8.11/cores/arduino/api/deprecated-avr-comp",
                 "/home/andrew/.arduino15/packages/arduino/hardware/samd/1.8.11/cores/arduino",
                 "/home/andrew/.arduino15/packages/arduino/hardware/samd/1.8.11/variants/mkrwifi1010",
-                "/home/andrew/Arduino/libraries/FastLED",
+                "/home/andrew/Arduino/libraries/FastLED/src",
                 "/home/andrew/.arduino15/packages/arduino/hardware/samd/1.8.11/libraries/SPI",
                 "/home/andrew/Arduino/libraries/WiFiNINA/src",
                 "/home/andrew/Arduino/libraries/ArduinoOTA/src",
