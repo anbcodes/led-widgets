@@ -1,0 +1,6 @@
+{
+    "board": "arduino:samd:mkrwifi1010",
+    "port": "192.168.86.102",
+    "output": "./build",
+    "sketch": "arduino.ino"
+}
