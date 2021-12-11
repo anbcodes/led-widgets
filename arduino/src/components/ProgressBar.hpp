@@ -38,10 +38,8 @@ class ProgressBar {
       bars[animatingBarIndex].offset =
           cubicInOut(1 - (float(animatingBarEnd - ms) / 3000.0)) *
           float(animatingBarTarget);
-      if (millis() % 20 == 0) {
-        Logger::printf("at %d\n", bars[animatingBarIndex].offset);
-      }
-      if (bars[animatingBarIndex].offset >= animatingBarTarget - 0.1) {
+
+      if (bars[animatingBarIndex].offset >= animatingBarTarget - 1.1) {
         bars[animatingBarIndex].offset = animatingBarTarget;
         animatingBarTarget = 0;
         animatingBarIndex = -1;
