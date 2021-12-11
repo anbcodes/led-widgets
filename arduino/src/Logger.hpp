@@ -4,18 +4,13 @@
 
 #include "consts.hpp"
 
-class Logger : public Stream
-{
+class Logger : public Stream {
   static WiFiUDP client;
 
-public:
-  static void init()
-  {
-    client.begin(LOG_PORT);
-  }
+ public:
+  static void init() { client.begin(LOG_PORT); }
 
-  static void print(const char *str)
-  {
+  static void print(const char *str) {
 #ifdef DO_LOGGING
     client.beginPacket(LOG_IP, LOG_PORT);
     client.print(str);
@@ -23,8 +18,7 @@ public:
 #endif
   }
 
-  static void println(const char *str)
-  {
+  static void println(const char *str) {
 #ifdef DO_LOGGING
     client.beginPacket(LOG_IP, LOG_PORT);
     client.println(str);
@@ -33,8 +27,7 @@ public:
   }
 
   template <typename... Args>
-  static void printf(const char *str, Args... args)
-  {
+  static void printf(const char *str, Args... args) {
 #ifdef DO_LOGGING
     client.beginPacket(LOG_IP, LOG_PORT);
 

@@ -1,21 +1,18 @@
 #pragma once
 
-#include <ArduinoJson.h>
 #include <FastLED.h>
+#include <WiFiNINA.h>
 
-#include "../consts.hpp"
-#include "../LedRequest.hpp"
-#include "../Logger.hpp"
-#include "../CommandServer.hpp"
 #include "../Color.hpp"
+#include "../Logger.hpp"
+#include "../consts.hpp"
 
-class StatusColor
-{
-private:
-    Color color = Color(0, 30, 0);
+class StatusColor {
+ private:
+  Color color = Color(0, 30, 0);
 
-public:
-    void update();
-    void parseCommand(LedRequest req);
-    Color colorOf(int x);
+ public:
+  void update();
+  void commandSet(uint8_t req[MAX_DATA_SIZE], WiFiClient client);
+  Color colorOf(int x);
 };

@@ -1,0 +1,1 @@
+{ BasedOnStyle: google, UseTab: Never, IndentWidth: 2, TabWidth: 2 }

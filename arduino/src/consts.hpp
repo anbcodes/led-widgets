@@ -13,15 +13,15 @@
 
 #define DO_LOGGING
 
-#define LOG_IP       \
-  {                  \
-    192, 168, 86, 27 \
-  }
+#define LOG_IP \
+  { 192, 168, 86, 27 }
 #define LOG_PORT 10000
 
 #define PRINTF_MAX_SIZE 100
 
 #define REQ_DATA_LEN 1024
 #define REQ_NAME_LEN 15
+
+#define MAX_DATA_SIZE 1024
 
 #endif

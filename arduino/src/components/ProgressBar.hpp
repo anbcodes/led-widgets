@@ -1,98 +1,80 @@
 #pragma once
 
-#include <ArduinoJson.h>
 #include <FastLED.h>
+#include <WiFiNINA.h>
 
-#include "../consts.hpp"
-#include "../LedRequest.hpp"
-#include "../Logger.hpp"
-#include "../CommandServer.hpp"
 #include "../Color.hpp"
+#include "../Logger.hpp"
+#include "../consts.hpp"
+#include "../util.hpp"
 
-struct Bar
-{
+struct Bar {
   Color color = Color();
   int len = 0;
   int offset = 0;
+
+  Bar(Color color, int len, int offset) {
+    this->color = color;
+    this->len = len;
+    this->offset = offset;
+  }
+
+  Bar() {}
 };
 
-template <int Bars>
-class ProgressBar
-{
-private:
-  Bar bars[Bars];
+template <int BarsCount>
+class ProgressBar {
+ private:
+  Bar bars[BarsCount];
 
   int animatingBarIndex = -1;
   int animatingBarTarget = 0;
+  int animatingBarEnd = 0;
 
-public:
-  void update()
-  {
-    if (animatingBarIndex > -1)
-    {
-      bars[animatingBarIndex].offset += 1;
-      if (bars[animatingBarIndex].offset == animatingBarTarget)
-      {
+ public:
+  void update() {
+    if (animatingBarIndex > -1) {
+      unsigned long ms = millis();
+      bars[animatingBarIndex].offset =
+          cubicInOut(1 - (float(animatingBarEnd - ms) / 3000.0)) *
+          float(animatingBarTarget);
+      if (millis() % 20 == 0) {
+        Logger::printf("at %d\n", bars[animatingBarIndex].offset);
+      }
+      if (bars[animatingBarIndex].offset >= animatingBarTarget - 0.1) {
+        bars[animatingBarIndex].offset = animatingBarTarget;
         animatingBarTarget = 0;
         animatingBarIndex = -1;
+        animatingBarEnd = 0;
       }
     }
   };
-  void parseCommand(LedRequest req)
-  {
-    StaticJsonDocument<256> doc;
+  void commandAddBar(uint8_t data[MAX_DATA_SIZE], WiFiClient client) {
+    uint16_t length = extract<uint16_t>(data);
+    uint16_t offset = extract<uint16_t>(data + 2);
+    uint8_t i = data[4];
+    uint8_t r = data[5];
+    uint8_t g = data[6];
+    uint8_t b = data[7];
+    uint8_t a = data[8];
 
-    deserializeJson(doc, req.data);
+    if (i < BarsCount) {
+      bars[i] = Bar(Color(r, g, b, a), length, 0);
 
-    if (!strcmp(req.name, "progressBar-addBar"))
-    {
-      int r = doc["color"]["r"];
-      int g = doc["color"]["g"];
-      int b = doc["color"]["b"];
-      int a = doc["color"]["a"];
-      int ind = doc["index"];
-      int off = doc["offset"];
-      int len = doc["len"];
-      Logger::printf("Add bar Color: %d, %d, %d, %d Index: %d, Offset: %d, Length: %d\n", r, g, b, a, ind, off, len);
-
-      if (ind > Bars)
-      {
-        CommandServer::send("{\"message\":\"failed!\"}");
-        return;
-      }
-      bars[ind].color = Color(r, g, b, a);
-      bars[ind].len = len;
-      bars[ind].offset = off;
-
-      CommandServer::send("{\"message\":\"success!\"}");
-    }
-
-    if (!strcmp(req.name, "progressBar-removeBar"))
-    {
-      int i = doc["i"];
-      Logger::printf("Remove Bar %d\n", i);
-
-      if (i > Bars)
-      {
-        CommandServer::send("{\"message\":\"failed!\"}");
-        return;
-      }
-      bars[i].color = Color();
-      bars[i].len = 0;
-      bars[i].offset = 0;
-
-      CommandServer::send("{\"message\":\"success!\"}");
+      animatingBarIndex = i;
+      animatingBarTarget = offset;
+      animatingBarEnd = millis() + 3000;
+      Logger::printf("Animating to %d, done at %d\n", animatingBarTarget,
+                     animatingBarEnd);
     }
   };
-  Color colorOf(int x)
-  {
-    if (x == 150)
-    {
-      return bars[0].color;
+
+  Color colorOf(int x) {
+    for (int i = 0; i < BarsCount; i++) {
+      if (x > bars[i].offset && x < bars[i].offset + bars[i].len) {
+        return bars[i].color;
+      }
     }
-    else
-    {
-      return Color();
-    }
+    return Color();
   }
 };
