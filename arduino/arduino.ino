@@ -6,7 +6,7 @@
 #include <ArduinoJson.h>
 // clang-format on
 
-#include <vector>
+// #include <vector>
 
 // #include "utility/wifi_drv.h"
 
@@ -14,6 +14,8 @@
 #include "src/secrets.hpp"
 
 #include "src/components/Main.hpp"
+// #include "src/CommandServer.hpp"
+#include "src/LedRequest.hpp"
 
 #ifndef PRINT
 #define PRINT(v) Serial.print(v)
@@ -92,16 +94,23 @@ void connect()
   FastLED.show();
 }
 
+Main mainComponent;
+
 void setup()
 {
   Serial.begin(9600);
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, LED_COUNT);
   pinMode(LED_BUILTIN, OUTPUT);
   connect();
+  // CommandServer::begin();
+  Logger::init();
   ArduinoOTA.begin(WiFi.localIP(), "LED", "LEDS1234", InternalStorage);
+  Logger::println("");
+  Logger::println("====================================");
+  Logger::println("====================================");
+  Logger::println("====================================");
+  Logger::println("               Setup!               ");
 }
-
-Main mainComponent;
 
 void loop()
 {
@@ -111,10 +120,27 @@ void loop()
   }
 
   ArduinoOTA.poll();
+
+  LedRequest req = CommandServer::getRequest();
+
+  // Logger::printf("Got Name: %s, Id: %d, Data: %s\n", req.name, req.id, req.data);
+
+  if (req.name != NULL && req.data != NULL && strlen(req.name) > 0)
+  {
+    Logger::printf("Got Name: %s, Id: %d, Data: %s\n", req.name, req.id, req.data);
+    mainComponent.parseCommand(req);
+  }
+
   for (int i = 0; i < LED_COUNT; i++)
   {
     leds[i] = mainComponent.colorOf(i);
   }
+
+  static int c = 0;
+
+  leds[c % 300] = CRGB(123, 232, 92);
+
+  c++;
 
   FastLED.show();
 

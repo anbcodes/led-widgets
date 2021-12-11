@@ -3,12 +3,24 @@
 
 CRGB Main::colorOf(int x)
 {
-  return statusColor.colorOf(x);
+  Color status = statusColor.colorOf(x);
+  Color progress = progressBar.colorOf(x);
+
+  if (progress.a)
+  {
+    return progress.rgb;
+  }
+
+  if (status.a)
+  {
+    return status.rgb;
+  }
 };
 
-JsonObject Main::parseCommand(JsonObject obj)
+void Main::parseCommand(LedRequest req)
 {
-  return statusColor.parseCommand(obj);
+  statusColor.parseCommand(req);
+  progressBar.parseCommand(req);
 };
 
 void Main::update()

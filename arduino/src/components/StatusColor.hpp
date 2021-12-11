@@ -3,13 +3,19 @@
 #include <ArduinoJson.h>
 #include <FastLED.h>
 
+#include "../consts.hpp"
+#include "../LedRequest.hpp"
+#include "../Logger.hpp"
+#include "../CommandServer.hpp"
+#include "../Color.hpp"
+
 class StatusColor
 {
 private:
-    CRGB color = CRGB(0, 0, 0);
+    Color color = Color(0, 30, 0);
 
 public:
     void update();
-    JsonObject parseCommand(JsonObject json);
-    CRGB colorOf(int x);
+    void parseCommand(LedRequest req);
+    Color colorOf(int x);
 };

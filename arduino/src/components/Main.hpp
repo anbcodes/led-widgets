@@ -4,14 +4,18 @@
 #include <FastLED.h>
 
 #include "StatusColor.hpp"
+#include "../consts.hpp"
+#include "../LedRequest.hpp"
+#include "ProgressBar.hpp"
 
 class Main
 {
 private:
   StatusColor statusColor = StatusColor();
+  ProgressBar<10> progressBar = ProgressBar<10>();
 
 public:
   void update();
-  JsonObject parseCommand(JsonObject json);
+  void parseCommand(LedRequest json);
   CRGB colorOf(int x);
 };

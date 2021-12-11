@@ -9,4 +9,19 @@
 
 #define DATA_PIN 5
 
+#define MAX_REQUEST_JSON_SIZE 1024
+
+#define DO_LOGGING
+
+#define LOG_IP       \
+  {                  \
+    192, 168, 86, 27 \
+  }
+#define LOG_PORT 10000
+
+#define PRINTF_MAX_SIZE 100
+
+#define REQ_DATA_LEN 1024
+#define REQ_NAME_LEN 15
+
 #endif

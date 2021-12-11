@@ -1,17 +1,29 @@
 #include "StatusColor.hpp"
 
-CRGB StatusColor::colorOf(int x)
+Color StatusColor::colorOf(int x)
 {
-  return CRGB(50, 50, 50);
+  return x == LED_COUNT - 1 ? color : Color();
 }
 
-JsonObject StatusColor::parseCommand(JsonObject obj)
+void StatusColor::parseCommand(LedRequest req)
 {
-  StaticJsonDocument<1024> doc;
+  StaticJsonDocument<256> doc;
 
-  doc["test"] = "error";
+  deserializeJson(doc, req.data);
 
-  return doc.to<JsonObject>();
+  if (!strcmp(req.name, "statusLED"))
+  {
+
+    int r = doc["r"];
+    int g = doc["g"];
+    int b = doc["b"];
+    int a = doc["a"];
+    Logger::printf("Got %d, %d, %d, %d\n", r, g, b, a);
+
+    color = Color(r, g, b, a);
+
+    CommandServer::send("{\"type\":\"success!\"}");
+  }
 };
 
 void StatusColor::update(){};
