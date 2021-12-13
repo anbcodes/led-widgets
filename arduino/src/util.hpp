@@ -1,3 +1,5 @@
+#pragma once
+
 template <typename T>
 T extract(uint8_t *data) {
   // If you get a compile error, it's because you did not use

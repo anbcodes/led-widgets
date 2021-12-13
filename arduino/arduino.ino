@@ -3,16 +3,14 @@
 #include <SPI.h>
 #include <WiFiNINA.h>
 #include <ArduinoOTA.h>
+#include <NTPClient.h>
 // clang-format on
-
-// #include <vector>
-
-// #include "utility/wifi_drv.h"
 
 #include "src/components/ProgressBar.hpp"
 #include "src/components/StatusColor.hpp"
 #include "src/consts.hpp"
 #include "src/secrets.hpp"
+#include "src/util.hpp"
 
 #ifndef PRINT
 #define PRINT(v) Serial.print(v)
@@ -25,6 +23,12 @@
 #endif
 
 CRGB leds[LED_COUNT];
+
+WiFiUDP ntpUDP;
+
+// By default 'pool.ntp.org' is used with 60 seconds update interval and
+// no offset
+NTPClient timeClient(ntpUDP);
 
 void connect() {
   Serial.begin(9600);
@@ -89,6 +93,7 @@ void setup() {
   Logger::init();
   ArduinoOTA.begin(WiFi.localIP(), "LED", "LEDS1234", InternalStorage);
   server.begin();
+  timeClient.begin();
   Logger::println("");
   Logger::println("====================================");
   Logger::println("====================================");
@@ -96,12 +101,17 @@ void setup() {
   Logger::println("               Setup!               ");
 }
 
+unsigned long long alarm = 1639283352 + 5000;
+bool ledsOn = true;
+
 enum CommandType {
   Unknown = 0,
   StatusColorSet = 1,
   ProgressBarAdd = 2,
-  ProgressBarRemove = 3,
-  ProgressBarModify = 4,
+  ProgressBarSet = 3,
+  AlarmSet = 4,
+  TurnOff = 5,
+  TurnOn = 6,
 };
 
 StatusColor statusColor;
@@ -112,24 +122,40 @@ void loop() {
     NVIC_SystemReset();
   }
 
+  for (int i = 0; i < LED_COUNT; i++) {
+    leds[i] = CRGB(0, 0, 0);
+  }
+
+  timeClient.update();
+
+  // Logger::printf("Time: %lu\n", timeClient.getEpochTime());
+
   ArduinoOTA.poll();
 
   parseCommand();
 
-  for (int i = 0; i < LED_COUNT; i++) {
-    Color pcolor = progressBars.colorOf(i);
-    if (pcolor.a) {
-      leds[i] = pcolor.rgb;
-    } else {
-      leds[i] = statusColor.colorOf(i).rgb;
+  if (ledsOn) {
+    for (int i = 0; i < LED_COUNT; i++) {
+      Color pcolor = progressBars.colorOf(i);
+      if (pcolor.a) {
+        leds[i] = pcolor.rgb;
+      } else {
+        leds[i] = statusColor.colorOf(i).rgb;
+      }
     }
   }
 
   static int c = 0;
 
-  leds[c % 300] = CRGB(123, 232, 92);
+  // leds[c % 300] = CRGB(123, 232, 92);
 
   c++;
+
+  if (timeClient.getEpochTime() > alarm && c % 150 < 75) {
+    for (int i = 0; i < LED_COUNT / 5; i++) {
+      leds[i * 5] = CRGB(255, 255, 255);
+    }
+  }
 
   FastLED.show();
 
@@ -189,12 +215,29 @@ void parseCommand() {
 
       data[dataLength] = '\0';
 
+      uint32_t *p = (uint32_t *)&alarm;
+
       switch (type) {
         case StatusColorSet:
           statusColor.commandSet(data, client);
           break;
         case ProgressBarAdd:
           progressBars.commandAddBar(data, client);
+          break;
+        case ProgressBarSet:
+          progressBars.commandSetBar(data, client);
+          break;
+        case AlarmSet:
+          alarm = extract<uint64_t>(data);
+          Logger::printf("Set alarm to %X%08X\n", p[1], p[0]);
+          break;
+        case TurnOff:
+          ledsOn = false;
+          Logger::print("Turned leds of\n");
+          break;
+        case TurnOn:
+          ledsOn = true;
+          Logger::print("Turned leds on\n");
           break;
         default:
           break;

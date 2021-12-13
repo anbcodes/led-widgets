@@ -56,6 +56,10 @@ class ProgressBar {
     uint8_t b = data[7];
     uint8_t a = data[8];
 
+    Logger::printf(
+        "Adding bar len: %d, off: %d, ind: %d, color: %d, %d, %d, %d\n", length,
+        offset, i, r, g, b, a);
+
     if (i < BarsCount) {
       bars[i] = Bar(Color(r, g, b, a), length, 0);
 
@@ -64,6 +68,24 @@ class ProgressBar {
       animatingBarEnd = millis() + 3000;
       Logger::printf("Animating to %d, done at %d\n", animatingBarTarget,
                      animatingBarEnd);
+    }
+  };
+
+  void commandSetBar(uint8_t data[MAX_DATA_SIZE], WiFiClient client) {
+    uint16_t length = extract<uint16_t>(data);
+    uint16_t offset = extract<uint16_t>(data + 2);
+    uint8_t i = data[4];
+    uint8_t r = data[5];
+    uint8_t g = data[6];
+    uint8_t b = data[7];
+    uint8_t a = data[8];
+
+    Logger::printf(
+        "Adding bar len: %d, off: %d, ind: %d, color: %d, %d, %d, %d\n", length,
+        offset, i, r, g, b, a);
+
+    if (i < BarsCount) {
+      bars[i] = Bar(Color(r, g, b, a), length, offset);
     }
   };
 

@@ -28,6 +28,7 @@
                 "/home/andrew/.arduino15/packages/arduino/hardware/samd/1.8.11/libraries/SPI",
                 "/home/andrew/Arduino/libraries/WiFiNINA/src",
                 "/home/andrew/Arduino/libraries/ArduinoOTA/src",
+                "/home/andrew/Arduino/libraries/NTPClient",
                 "/home/andrew/.arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1",
                 "/home/andrew/.arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1/arm-none-eabi",
                 "/home/andrew/.arduino15/packages/arduino/tools/arm-none-eabi-gcc/7-2017q4/arm-none-eabi/include/c++/7.2.1/backward",
