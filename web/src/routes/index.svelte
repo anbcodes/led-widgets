@@ -16,6 +16,8 @@
 		len: number;
 	}[];
 
+	let brightness = 255;
+
 	const send = (command: number, data: number[]) => {
 		const cmdPart1 = command % 256;
 		const cmdPart2 = (command / 256) % 256;
@@ -29,7 +31,7 @@
 			Math.floor(v)
 		);
 
-		console.log(sending.map((v) => `\\x${v.toString(16).padStart(2, '0')}`).join(''));
+		// console.log(sending.map((v) => `\\x${v.toString(16).padStart(2, '0')}`).join(''));
 
 		ws?.send(new Uint8Array(sending));
 	};
@@ -38,16 +40,23 @@
 
 	type Color = { r: number; g: number; b: number; a: number };
 
+	const clearLines = () => {
+		send(7, []);
+	};
+
 	const sendLine = (
 		index: number,
-		offset: number,
+		// offset: number,
 		length: number,
 		color: Color,
 		animate = true
 	) => {
+		console.log(
+			`Sending index: ${index}, len: ${length}, r: ${color.r}, g: ${color.g}, b: ${color.b}, animate: ${animate}`
+		);
 		send(2 + +!animate, [
 			...word(length),
-			...word(offset),
+			// ...word(offset),
 			index,
 			color.r,
 			color.g,
@@ -55,14 +64,6 @@
 			color.a
 		]);
 	};
-
-	const addRedLine = () =>
-		sendLine(0, 160, 14, {
-			r: 255,
-			g: 0,
-			b: 0,
-			a: 255
-		});
 
 	const addItem = () => {
 		todo.push({
@@ -82,21 +83,29 @@
 	};
 
 	let mounted = false;
-	let offsetTotal = 100;
+
+	const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+	let wsIsOpen = false;
 
 	onMount(() => {
+		//@ts-ignore
+		window.sendLine = sendLine;
+		brightness = +localStorage.getItem('brightness') || 255;
 		todo = JSON.parse(localStorage.getItem('todo')) || [];
 		ws = new WebSocket('ws://localhost:10101');
-		ws.addEventListener('open', () => {
-			todo.forEach((item, i) => {
+		ws.addEventListener('open', async () => {
+			clearLines();
+			for (let i = 0; i < todo.length; i++) {
+				let item = todo[i];
 				if (item.done) {
-					sendLine(i, offsetTotal, item.len, fromHexColor(item.color), false);
-					offsetTotal += item.len;
+					sendLine(i, item.len, fromHexColor(item.color));
 				}
-			});
+			}
+			wsIsOpen = true;
 		});
 		ws.addEventListener('message', async (ev) => {
-			console.log(ev, await ev.data.text());
+			// console.log(ev, await ev.data.text());
 		});
 		mounted = true;
 	});
@@ -106,22 +115,44 @@
 			/#([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])/
 		);
 
-		console.log(matches);
+		// console.log(matches);
 
 		return {
-			r: parseInt(matches[1], 16),
-			g: parseInt(matches[2], 16),
-			b: parseInt(matches[3], 16),
+			r: Math.round((parseInt(matches[1], 16) / 255) * brightness),
+			g: Math.round((parseInt(matches[2], 16) / 255) * brightness),
+			b: Math.round((parseInt(matches[3], 16) / 255) * brightness),
 			a: 255
 		};
 	};
 
-	const saveTodo = () => {
+	const saveTodo = (item, i: number, animate = false) => {
 		console.log(todo);
+		if (item.done) {
+			sendLine(i, item.len, fromHexColor(item.color), animate);
+		} else {
+			sendLine(i, 0, { r: 0, g: 0, b: 0, a: 0 }, false);
+		}
 		localStorage.setItem('todo', JSON.stringify(todo));
 	};
 
-	console.log(fromHexColor('#ffffff'));
+	let toEarlyForBrightnessChange = false;
+
+	const onBrightnessChange = (brightness: number) => {
+		if (mounted && wsIsOpen && !toEarlyForBrightnessChange) {
+			todo.forEach((item, i) => {
+				if (item.done) {
+					sendLine(i, item.len, fromHexColor(item.color), false);
+				}
+			});
+			toEarlyForBrightnessChange = true;
+			setTimeout(() => (toEarlyForBrightnessChange = false), 200);
+			localStorage.setItem('brightness', brightness.toString(10));
+		}
+	};
+
+	$: onBrightnessChange(brightness);
+
+	// console.log(fromHexColor('#ffffff'));
 </script>
 
 <h1>Welcome to led todo list</h1>
@@ -134,26 +165,24 @@
 				style="background-color: {!item.done ? `rgb(255, 255, 255)` : 'rgb(31 41 55)'}"
 				on:click={() => {
 					item.done = !item.done;
-					if (item.done) {
-						sendLine(i, offsetTotal, item.len, fromHexColor(item.color));
-						offsetTotal += item.len;
-					} else {
-						sendLine(i, 0, 0, { r: 0, g: 0, b: 0, a: 0 }, false);
-						offsetTotal -= item.len;
-					}
-					saveTodo();
+					saveTodo(item, i, true);
 				}}
 			/>
-			<div><input type="text" bind:value={item.name} on:change={saveTodo} /></div>
+			<div><input type="text" bind:value={item.name} on:change={() => saveTodo(item, i)} /></div>
 
 			<div class="m-2">
-				<input type="color" bind:value={item.color} on:change={saveTodo} />
+				<input type="color" bind:value={item.color} on:change={() => saveTodo(item, i)} />
 			</div>
 			<div class="m-2">
-				<input type="number" bind:value={item.len} on:change={saveTodo} />
+				<input type="number" bind:value={item.len} on:change={() => saveTodo(item, i)} />
 			</div>
 		</div>
 	{/each}
+</div>
+
+<div>
+	<div>Brightness</div>
+	<div><input type="range" min="0" max="255" bind:value={brightness} /></div>
 </div>
 
 <div>Add item</div>
@@ -166,5 +195,3 @@
 	<div><input type="number" bind:value={newItem.len} /></div>
 	<button on:click={addItem}>Add!</button>
 </div>
-
-<button on:click={addRedLine}> send light </button>

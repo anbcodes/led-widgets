@@ -1,3 +1,5 @@
+#!/bin/bash
+
 rm -rf /tmp/arduino-upload
 
 arduino-cli compile --output-dir=build --build-path=/tmp/arduino-upload -b arduino:samd:mkrwifi1010 .

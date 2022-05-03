@@ -1,8 +1,8 @@
 let s = ''
 
-let a = (+new Date(2021, 11, 13, 7, 45, 0)) / 1000;
+let a = (+new Date(2022, 0, 14, 8, 15, 0)) / 1000;
 
-console.log(new Date(a * 1000).toString());
+console.error(new Date(a * 1000).toString());
 
 // let a = (+new Date(+new Date() + 1000 * 60 * 0.5) / 1000)
 s += `\\x${Math.floor(a % 256).toString(16).padStart(2, '0')}`

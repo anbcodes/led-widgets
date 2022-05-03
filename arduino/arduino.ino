@@ -101,7 +101,7 @@ void setup() {
   Logger::println("               Setup!               ");
 }
 
-unsigned long long alarm = 1639283352 + 5000;
+unsigned long long alarm = 18446744073709551615;
 bool ledsOn = true;
 
 enum CommandType {
@@ -112,6 +112,7 @@ enum CommandType {
   AlarmSet = 4,
   TurnOff = 5,
   TurnOn = 6,
+  ProgressBarClear = 7,
 };
 
 StatusColor statusColor;
@@ -149,11 +150,20 @@ void loop() {
 
   // leds[c % 300] = CRGB(123, 232, 92);
 
-  c++;
-
-  if (timeClient.getEpochTime() > alarm && c % 150 < 75) {
-    for (int i = 0; i < LED_COUNT / 5; i++) {
-      leds[i * 5] = CRGB(255, 255, 255);
+  if (timeClient.getEpochTime() > alarm) {
+    int dist = timeClient.getEpochTime() - alarm;
+    float dp = dist / 100.0;
+    Logger::printf("Distance: %d\n", dist);
+    for (int i = 0; i < LED_COUNT / 4; i++) {
+      // leds[i * 5] =
+      //     CHSV(22.0 / 360.0 * 255.0, 255.0, min(dist, (58.0 / 100.0) *
+      //     255.0));
+      CRGB color = CRGB(Candle);
+      color.r = min(color.r * dp, color.r);
+      color.g = min(color.g * dp, color.g);
+      color.b = min(color.b * dp, color.b);
+      leds[i * 4] = color;
+      // leds[i * 5] = CRGB(255, 120, 40);
     }
   }
 
@@ -238,6 +248,9 @@ void parseCommand() {
         case TurnOn:
           ledsOn = true;
           Logger::print("Turned leds on\n");
+          break;
+        case ProgressBarClear:
+          progressBars.commandClear();
           break;
         default:
           break;
